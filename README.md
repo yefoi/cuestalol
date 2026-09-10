@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cuestalo
 
-## Getting Started
+**Descubre cuánto cuesta construir tu idea.**
 
-First, run the development server:
+Web conectada a la API de DeepSeek que:
+
+- **Compara modelos** (`deepseek-flash`, `deepseek-v4-pro`) midiendo latencia real (TTFT), tiempo total, tokens/s, tokens de entrada/salida/razonamiento/caché y coste por tarifa punta/valle.
+- **Estima proyectos**: describes una idea y la IA la descompone en funcionalidades, estima horas de desarrollo y tokens de IA, y calcula el coste con cada modelo.
+
+## Stack
+
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4.
+
+## Puesta en marcha
 
 ```bash
+cp .env.example .env.local      # en Windows: Copy-Item .env.example .env.local
+# edita .env.local y añade DEEPSEEK_API_KEY
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre http://localhost:3000 y pulsa **Verificar conexión**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+La API key se usa solo en el servidor (rutas API), nunca se expone al navegador.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estructura
 
-## Learn More
+| Ruta | Descripción |
+| --- | --- |
+| `src/lib/models.ts` | Tarifas, detección de hora punta/valle (UTC) y cálculo de coste. |
+| `src/lib/deepseek.ts` | Cliente con streaming (mide TTFT) y parseo JSON robusto. |
+| `src/lib/types.ts` | Tipos compartidos de las respuestas de la API. |
+| `src/app/api/models/route.ts` | Catálogo, tarifa actual y verificación de la API key. |
+| `src/app/api/compare/route.ts` | Compara modelos en paralelo. |
+| `src/app/api/estimate/route.ts` | Genera el plan y estima coste/tiempo/tokens. |
+| `src/components/*` | UI: comparador, estimador y precios. |
 
-To learn more about Next.js, take a look at the following resources:
+## Precios
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Basados en la tarifa oficial de DeepSeek (sep 2026). Hora valle = mitad de
+tarifa; horas punta: 01:00–04:00 y 06:00–10:00 UTC (lunes a viernes).
+Actualiza los valores en `src/lib/models.ts` si DeepSeek cambia los precios.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev     # desarrollo
+npm run build   # build de producción
+npm run start   # servidor de producción
+npm run lint    # ESLint
+```
