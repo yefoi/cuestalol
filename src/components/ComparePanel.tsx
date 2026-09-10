@@ -4,11 +4,27 @@ import { useMemo, useState } from "react";
 
 import BarList, { type BarItem } from "@/components/BarList";
 import {
+  IconBolt,
+  IconChart,
+  IconCheck,
+  IconClock,
+  IconCoins,
+  IconCompare,
+  IconCopy,
+  IconSignal,
+  IconSparkles,
+  IconTokens,
+} from "@/components/icons";
+import {
   Badge,
   Button,
   Card,
+  EmptyState,
   Field,
+  SectionHeading,
+  Skeleton,
   Spinner,
+  Stat,
   Toggle,
   cn,
   inputClass,
@@ -98,7 +114,8 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
   }
 
   const { fastest, cheapest } = useMemo(() => {
-    if (!data) return { fastest: null as string | null, cheapest: null as string | null };
+    if (!data)
+      return { fastest: null as string | null, cheapest: null as string | null };
     const ok = data.results.filter((r) => r.ok);
     const fastestModel = [...ok]
       .filter((r) => (r.ttftMs ?? 0) > 0)
@@ -146,16 +163,20 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_1fr] lg:items-start">
       <Card className="lg:sticky lg:top-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Prompt</h2>
-          <Button
-            variant="ghost"
-            className="px-3 py-1 text-xs"
-            onClick={() => setShowAdvanced((v) => !v)}
-          >
-            {showAdvanced ? "Ocultar opciones" : "Opciones"}
-          </Button>
-        </div>
+        <SectionHeading
+          title="Prompt"
+          subtitle="Envíalo a varios modelos a la vez."
+          icon={<IconCompare className="size-4" />}
+          action={
+            <Button
+              variant="ghost"
+              className="px-3 py-1 text-xs"
+              onClick={() => setShowAdvanced((v) => !v)}
+            >
+              {showAdvanced ? "Ocultar" : "Opciones"}
+            </Button>
+          }
+        />
 
         <textarea
           value={prompt}
@@ -204,13 +225,13 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
               checked={thinking}
               onChange={setThinking}
               label="Modo razonamiento"
-              hint="Activa thinking y añade tokens de razonamiento + latencia"
+              hint="Activa thinking: más tokens y latencia"
             />
           </div>
         ) : null}
 
         <div className="mt-5">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
             Modelos
           </span>
           <div className="mt-2 grid gap-2">
@@ -222,28 +243,30 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
                   type="button"
                   onClick={() => toggleModel(model.id)}
                   className={cn(
-                    "flex items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition",
+                    "flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left text-sm transition",
                     active
                       ? "border-emerald-400/50 bg-emerald-400/10"
                       : "border-white/10 bg-slate-950/40 hover:border-white/20",
                   )}
                 >
-                  <span>
-                    <span className="font-medium text-slate-100">
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium text-slate-100">
                       {model.label}
                     </span>
-                    <span className="ml-2 text-xs text-slate-500">
+                    <span className="block truncate text-xs text-slate-500">
                       {model.version}
                     </span>
                   </span>
                   <span
                     className={cn(
-                      "size-4 rounded-full border",
+                      "flex size-5 shrink-0 items-center justify-center rounded-md border transition",
                       active
-                        ? "border-emerald-400 bg-emerald-400"
-                        : "border-white/30",
+                        ? "border-emerald-400 bg-emerald-400 text-slate-950"
+                        : "border-white/25 text-transparent",
                     )}
-                  />
+                  >
+                    <IconCheck className="size-3.5" strokeWidth={2.5} />
+                  </span>
                 </button>
               );
             })}
@@ -254,7 +277,7 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
         </div>
 
         <Button onClick={run} disabled={loading} className="mt-5 w-full">
-          {loading ? <Spinner /> : null}
+          {loading ? <Spinner /> : <IconBolt className="size-4" />}
           {loading ? "Midiendo…" : "Comparar modelos"}
         </Button>
 
@@ -264,6 +287,7 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
             className="mt-2 w-full"
             onClick={() => exportCompareCsv(data)}
           >
+            <IconSparkles className="size-4" />
             Exportar CSV
           </Button>
         ) : null}
@@ -277,27 +301,26 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
 
       <div className="flex flex-col gap-4">
         {!data && !loading ? (
-          <Card className="flex min-h-64 flex-col items-center justify-center gap-2 text-center">
-            <p className="text-slate-300">
-              Envía un prompt y verás tiempo, tokens y coste de cada modelo.
-            </p>
-            <p className="max-w-md text-sm text-slate-500">
-              Latencia hasta el primer token (TTFT), tiempo total, tokens de
-              entrada/salida/razonamiento y coste en hora punta y valle.
-            </p>
-          </Card>
+          <EmptyState
+            icon={<IconCompare className="size-7" />}
+            title="Compara modelos de un vistazo"
+            description="Latencia hasta el primer token (TTFT), tiempo total, tokens de entrada/salida/razonamiento y coste en hora punta y valle."
+          />
         ) : null}
 
         {loading ? (
-          <Card className="flex min-h-64 items-center justify-center gap-3">
-            <Spinner />
-            <span className="text-slate-300">Consultando a DeepSeek…</span>
-          </Card>
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-36" />
+            <Skeleton className="h-64" />
+          </div>
         ) : null}
 
         {charts ? (
-          <Card>
-            <h3 className="mb-3 text-base font-semibold">Comparativa visual</h3>
+          <Card className="animate-rise">
+            <SectionHeading
+              title="Comparativa visual"
+              icon={<IconChart className="size-4" />}
+            />
             <div className="grid gap-3 md:grid-cols-3">
               <BarList title="Coste" items={charts.cost} />
               <BarList title="TTFT" items={charts.ttft} />
@@ -306,143 +329,180 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
           </Card>
         ) : null}
 
-        {data?.results.map((result) => (
-          <Card key={result.model}>
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-semibold text-slate-100">
-                {labelFor(result.model)}
-              </h3>
-              <code className="rounded-md bg-white/5 px-1.5 py-0.5 text-xs text-slate-400">
-                {result.model}
-              </code>
-              {fastest === result.model ? (
-                <Badge tone="green">Más rápido</Badge>
-              ) : null}
-              {cheapest === result.model ? (
-                <Badge tone="sky">Más barato</Badge>
-              ) : null}
-              {!result.ok ? <Badge tone="rose">Error</Badge> : null}
-            </div>
+        {data?.results.map((result) => {
+          const winner = fastest === result.model || cheapest === result.model;
+          return (
+            <Card
+              key={result.model}
+              className={cn(
+                "animate-rise",
+                winner && "ring-1 ring-emerald-400/30",
+              )}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base font-semibold text-slate-100">
+                  {labelFor(result.model)}
+                </h3>
+                <code className="rounded-md bg-white/5 px-1.5 py-0.5 text-xs text-slate-400">
+                  {result.model}
+                </code>
+                {fastest === result.model ? (
+                  <Badge tone="green">
+                    <IconBolt className="size-3" />
+                    Más rápido
+                  </Badge>
+                ) : null}
+                {cheapest === result.model ? (
+                  <Badge tone="sky">
+                    <IconCoins className="size-3" />
+                    Más barato
+                  </Badge>
+                ) : null}
+                {!result.ok ? <Badge tone="rose">Error</Badge> : null}
+              </div>
 
-            {!result.ok ? (
-              <p className="mt-3 rounded-xl border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-sm text-rose-200">
-                {result.error}
-              </p>
-            ) : (
-              <>
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Metric label="TTFT" value={formatMs(result.ttftMs ?? 0)} />
-                  <Metric
-                    label="Tiempo total"
-                    value={formatMs(result.totalMs ?? 0)}
-                  />
-                  <Metric
-                    label="Velocidad"
-                    value={`${(result.tokensPerSecond ?? 0).toFixed(0)} tok/s`}
-                  />
-                  <Metric
-                    label="Coste"
-                    value={formatUsd(result.cost?.totalCost ?? 0)}
-                    tone="green"
-                  />
-                </div>
-
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Metric
-                    label="Tokens entrada"
-                    value={formatNumber(result.usage?.promptTokens ?? 0)}
-                  />
-                  <Metric
-                    label="Tokens salida"
-                    value={formatNumber(result.usage?.completionTokens ?? 0)}
-                  />
-                  <Metric
-                    label="Razonamiento"
-                    value={formatNumber(result.usage?.reasoningTokens ?? 0)}
-                  />
-                  <Metric
-                    label="Cache hit"
-                    value={formatNumber(result.usage?.cachedTokens ?? 0)}
-                  />
-                </div>
-
-                {result.cost ? (
-                  <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-white/5 text-xs uppercase tracking-wide text-slate-400">
-                        <tr>
-                          <th className="px-3 py-2 font-medium">Tarifa</th>
-                          <th className="px-3 py-2 font-medium">Entrada</th>
-                          <th className="px-3 py-2 font-medium">Salida</th>
-                          <th className="px-3 py-2 font-medium">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        <CostRow
-                          label="Valle"
-                          input={result.cost.offPeak.inputCost}
-                          output={result.cost.offPeak.outputCost}
-                          total={result.cost.offPeak.totalCost}
-                          active={result.cost.nowTier === "off-peak"}
-                        />
-                        <CostRow
-                          label="Punta"
-                          input={result.cost.peak.inputCost}
-                          output={result.cost.peak.outputCost}
-                          total={result.cost.peak.totalCost}
-                          active={result.cost.nowTier === "peak"}
-                        />
-                      </tbody>
-                    </table>
+              {!result.ok ? (
+                <p className="mt-3 rounded-xl border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-sm text-rose-200">
+                  {result.error}
+                </p>
+              ) : (
+                <>
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <Stat
+                      label="TTFT"
+                      value={formatMs(result.ttftMs ?? 0)}
+                      tone="sky"
+                      icon={<IconClock className="size-3.5" />}
+                    />
+                    <Stat
+                      label="Tiempo total"
+                      value={formatMs(result.totalMs ?? 0)}
+                      icon={<IconClock className="size-3.5" />}
+                    />
+                    <Stat
+                      label="Velocidad"
+                      value={`${(result.tokensPerSecond ?? 0).toFixed(0)} tok/s`}
+                      tone="amber"
+                      icon={<IconSignal className="size-3.5" />}
+                    />
+                    <Stat
+                      label="Coste"
+                      value={formatUsd(result.cost?.totalCost ?? 0)}
+                      tone="green"
+                      icon={<IconCoins className="size-3.5" />}
+                    />
                   </div>
-                ) : null}
 
-                <pre className="mt-4 max-h-72 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-slate-950/60 p-3 text-[13px] leading-relaxed text-slate-200">
-                  {result.content || "(sin contenido)"}
-                </pre>
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <Stat
+                      label="Tokens entrada"
+                      value={formatNumber(result.usage?.promptTokens ?? 0)}
+                      icon={<IconTokens className="size-3.5" />}
+                    />
+                    <Stat
+                      label="Tokens salida"
+                      value={formatNumber(result.usage?.completionTokens ?? 0)}
+                      icon={<IconTokens className="size-3.5" />}
+                    />
+                    <Stat
+                      label="Razonamiento"
+                      value={formatNumber(result.usage?.reasoningTokens ?? 0)}
+                      tone="violet"
+                      icon={<IconSparkles className="size-3.5" />}
+                    />
+                    <Stat
+                      label="Cache hit"
+                      value={formatNumber(result.usage?.cachedTokens ?? 0)}
+                      icon={<IconTokens className="size-3.5" />}
+                    />
+                  </div>
 
-                {result.reasoning ? (
-                  <details className="mt-3 rounded-xl border border-white/10 bg-slate-950/40 p-3">
-                    <summary className="cursor-pointer text-sm text-slate-400">
-                      Ver razonamiento interno
-                    </summary>
-                    <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap text-[12px] text-slate-400">
-                      {result.reasoning}
+                  {result.cost ? (
+                    <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-white/5 text-xs uppercase tracking-wider text-slate-400">
+                          <tr>
+                            <th className="px-3 py-2 font-medium">Tarifa</th>
+                            <th className="px-3 py-2 font-medium">Entrada</th>
+                            <th className="px-3 py-2 font-medium">Salida</th>
+                            <th className="px-3 py-2 font-medium">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          <CostRow
+                            label="Valle"
+                            input={result.cost.offPeak.inputCost}
+                            output={result.cost.offPeak.outputCost}
+                            total={result.cost.offPeak.totalCost}
+                            active={result.cost.nowTier === "off-peak"}
+                          />
+                          <CostRow
+                            label="Punta"
+                            input={result.cost.peak.inputCost}
+                            output={result.cost.peak.outputCost}
+                            total={result.cost.peak.totalCost}
+                            active={result.cost.nowTier === "peak"}
+                          />
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-slate-950/60">
+                    <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.03] px-3 py-1.5">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                        Respuesta
+                      </span>
+                      <CopyButton text={result.content ?? ""} />
+                    </div>
+                    <pre className="max-h-72 overflow-auto whitespace-pre-wrap p-3 text-[13px] leading-relaxed text-slate-200">
+                      {result.content || "(sin contenido)"}
                     </pre>
-                  </details>
-                ) : null}
-              </>
-            )}
-          </Card>
-        ))}
+                  </div>
+
+                  {result.reasoning ? (
+                    <details className="mt-3 rounded-xl border border-white/10 bg-slate-950/40 p-3">
+                      <summary className="cursor-pointer text-sm text-slate-400">
+                        Ver razonamiento interno
+                      </summary>
+                      <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap text-[12px] text-slate-400">
+                        {result.reasoning}
+                      </pre>
+                    </details>
+                  ) : null}
+                </>
+              )}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function Metric({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "green";
-}) {
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
   return (
-    <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">
-        {label}
-      </div>
-      <div
-        className={cn(
-          "mt-0.5 text-sm font-semibold text-slate-100",
-          tone === "green" && "text-emerald-300",
-        )}
-      >
-        {value}
-      </div>
-    </div>
+    <Button
+      variant="ghost"
+      className="px-2.5 py-1 text-[11px]"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          // portapapeles no disponible
+        }
+      }}
+    >
+      {copied ? (
+        <IconCheck className="size-3.5 text-emerald-300" />
+      ) : (
+        <IconCopy className="size-3.5" />
+      )}
+      {copied ? "Copiado" : "Copiar"}
+    </Button>
   );
 }
 

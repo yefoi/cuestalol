@@ -4,11 +4,25 @@ import { useMemo, useState } from "react";
 
 import BarList, { type BarItem } from "@/components/BarList";
 import {
+  IconCalculator,
+  IconChart,
+  IconClock,
+  IconCoins,
+  IconDownload,
+  IconFile,
+  IconSparkles,
+  IconTokens,
+} from "@/components/icons";
+import {
   Badge,
   Button,
   Card,
+  EmptyState,
   Field,
+  SectionHeading,
+  Skeleton,
   Spinner,
+  Stat,
   Toggle,
   cn,
   inputClass,
@@ -139,7 +153,11 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,400px)_1fr] lg:items-start">
       <Card className="lg:sticky lg:top-6">
-        <h2 className="mb-4 text-lg font-semibold">Describe tu idea</h2>
+        <SectionHeading
+          title="Describe tu idea"
+          subtitle="La IA la convierte en un presupuesto."
+          icon={<IconCalculator className="size-4" />}
+        />
 
         <Field label="Idea o proyecto">
           <textarea
@@ -246,17 +264,19 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
         </div>
 
         <Button onClick={run} disabled={loading} className="mt-5 w-full">
-          {loading ? <Spinner /> : null}
+          {loading ? <Spinner /> : <IconSparkles className="size-4" />}
           {loading ? "Estimando…" : "Estimar proyecto"}
         </Button>
 
         {data ? (
           <div className="mt-2 grid grid-cols-2 gap-2">
             <Button variant="ghost" onClick={() => exportEstimateCsv(data)}>
-              Exportar CSV
+              <IconFile className="size-4" />
+              CSV
             </Button>
             <Button variant="ghost" onClick={() => exportEstimatePdf(data)}>
-              Exportar PDF
+              <IconDownload className="size-4" />
+              PDF
             </Button>
           </div>
         ) : null}
@@ -270,79 +290,78 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
 
       <div className="flex flex-col gap-4">
         {!data && !loading ? (
-          <Card className="flex min-h-64 flex-col items-center justify-center gap-2 text-center">
-            <p className="text-slate-300">
-              Obtén un desglose de esfuerzo, tokens y coste.
-            </p>
-            <p className="max-w-md text-sm text-slate-500">
-              La IA descompone la idea en funcionalidades, estima horas de
-              desarrollo y tokens de IA, y calcula el coste con cada modelo
-              DeepSeek.
-            </p>
-          </Card>
+          <EmptyState
+            icon={<IconCalculator className="size-7" />}
+            title="Obtén un desglose de esfuerzo, tokens y coste"
+            description="La IA descompone la idea en funcionalidades, estima horas de desarrollo y tokens, y calcula el coste con cada modelo."
+          />
         ) : null}
 
         {loading ? (
-          <Card className="flex min-h-64 items-center justify-center gap-3">
-            <Spinner />
-            <span className="text-slate-300">Generando el plan…</span>
-          </Card>
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-40" />
+            <Skeleton className="h-64" />
+            <Skeleton className="h-48" />
+          </div>
         ) : null}
 
         {data ? (
           <>
-            <Card>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="green">{data.plan.projectType}</Badge>
-                <Badge tone="amber">
-                  Complejidad {data.plan.complexity}
-                </Badge>
-                <Badge>{data.totals.featureCount} funcionalidades</Badge>
-                <Badge tone="sky">
-                  Estimado con {data.model}
-                </Badge>
-              </div>
-              {data.plan.summary ? (
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                  {data.plan.summary}
-                </p>
-              ) : null}
+            <Card className="animate-rise">
+              <SectionHeading
+                title={data.plan.projectType}
+                subtitle={data.plan.summary || undefined}
+                icon={<IconSparkles className="size-4" />}
+                action={
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone="amber">
+                      Complejidad {data.plan.complexity}
+                    </Badge>
+                    <Badge tone="sky">
+                      {data.totals.featureCount} funcionalidades
+                    </Badge>
+                  </div>
+                }
+              />
 
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Metric
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Stat
                   label="Esfuerzo humano"
                   value={formatHours(data.totals.humanHours)}
+                  tone="sky"
+                  icon={<IconClock className="size-3.5" />}
                 />
-                <Metric
+                <Stat
                   label="Esfuerzo por dev"
                   value={formatHours(
                     data.totals.humanHours / data.schedule.teamSize,
                   )}
                   hint={`${data.schedule.teamSize} dev(s)`}
+                  icon={<IconCalculator className="size-3.5" />}
                 />
-                <Metric
+                <Stat
                   label="Coste desarrollo"
                   value={formatUsd(data.schedule.humanCost)}
                   tone="green"
+                  icon={<IconCoins className="size-3.5" />}
                 />
-                <Metric
+                <Stat
                   label="Tokens IA"
                   value={formatNumber(data.totals.aiTotalTokens)}
+                  tone="violet"
+                  icon={<IconTokens className="size-3.5" />}
                 />
               </div>
             </Card>
 
-            <Card>
-              <h3 className="text-base font-semibold">
-                Coste de IA para construir el proyecto
-              </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Tokens estimados: {formatNumber(data.totals.aiInputTokens)}{" "}
-                entrada + {formatNumber(data.totals.aiOutputTokens)} salida.
-                {" "}Tarifa actual: <strong className="text-slate-300">{data.tier === "peak" ? "punta" : "valle"}</strong>.
-              </p>
+            <Card className="animate-rise">
+              <SectionHeading
+                title="Coste de IA para construir el proyecto"
+                subtitle={`Tokens estimados: ${formatNumber(data.totals.aiInputTokens)} entrada + ${formatNumber(data.totals.aiOutputTokens)} salida · tarifa actual ${data.tier === "peak" ? "punta" : "valle"}.`}
+                icon={<IconCoins className="size-4" />}
+              />
 
-              <div className="mt-4">
+              <div className="mt-1">
                 <BarList
                   title="Coste IA por modelo (tarifa actual)"
                   items={costChart}
@@ -351,7 +370,7 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
 
               <div className="mt-4 overflow-x-auto rounded-xl border border-white/10">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-white/5 text-xs uppercase tracking-wide text-slate-400">
+                  <thead className="bg-white/5 text-xs uppercase tracking-wider text-slate-400">
                     <tr>
                       <th className="px-3 py-2 font-medium">Modelo</th>
                       <th className="px-3 py-2 font-medium">Valle respaldo</th>
@@ -401,11 +420,15 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
               </p>
             </Card>
 
-            <Card>
-              <h3 className="text-base font-semibold">Funcionalidades</h3>
-              <div className="mt-3 overflow-x-auto rounded-xl border border-white/10">
+            <Card className="animate-rise">
+              <SectionHeading
+                title="Funcionalidades"
+                subtitle={`${data.totals.featureCount} tareas desglosadas.`}
+                icon={<IconChart className="size-4" />}
+              />
+              <div className="overflow-x-auto rounded-xl border border-white/10">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-white/5 text-xs uppercase tracking-wide text-slate-400">
+                  <thead className="bg-white/5 text-xs uppercase tracking-wider text-slate-400">
                     <tr>
                       <th className="px-3 py-2 font-medium">Funcionalidad</th>
                       <th className="px-3 py-2 font-medium">Complejidad</th>
@@ -426,8 +449,10 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
                             </div>
                           ) : null}
                         </td>
-                        <td className="px-3 py-2 text-xs capitalize text-slate-400">
-                          {feature.complexity}
+                        <td className="px-3 py-2">
+                          <Badge tone={complexityTone(feature.complexity)}>
+                            {feature.complexity}
+                          </Badge>
                         </td>
                         <td className="px-3 py-2 text-xs text-slate-300">
                           {feature.humanHours.toFixed(1)} h
@@ -447,7 +472,11 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
               data.plan.risks.length > 0 ||
               data.plan.suggestedStack.length > 0 ||
               data.plan.notes) ? (
-              <Card>
+              <Card className="animate-rise">
+                <SectionHeading
+                  title="Stack, supuestos y riesgos"
+                  icon={<IconSparkles className="size-4" />}
+                />
                 <div className="grid gap-5 sm:grid-cols-2">
                   {data.plan.suggestedStack.length > 0 ? (
                     <div>
@@ -501,10 +530,11 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
               </Card>
             ) : null}
 
-            <p className="px-1 text-xs text-slate-500">
-              Esta estimación costó{" "}
-              {formatUsd(data.estimationCall.totalCost)} y tardó{" "}
-              {formatMs(data.timing.totalMs)} ({formatNumber(data.usage.completionTokens)} tokens de salida).
+            <p className="flex items-center gap-2 px-1 text-xs text-slate-500">
+              <IconClock className="size-3.5" />
+              Esta estimación costó {formatUsd(data.estimationCall.totalCost)} y
+              tardó {formatMs(data.timing.totalMs)} (
+              {formatNumber(data.usage.completionTokens)} tokens de salida).
             </p>
           </>
         ) : null}
@@ -513,33 +543,12 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
   );
 }
 
-function Metric({
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "green";
-}) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">
-        {label}
-      </div>
-      <div
-        className={cn(
-          "mt-0.5 text-sm font-semibold text-slate-100",
-          tone === "green" && "text-emerald-300",
-        )}
-      >
-        {value}
-      </div>
-      {hint ? (
-        <div className="text-[11px] text-slate-500">{hint}</div>
-      ) : null}
-    </div>
-  );
+function complexityTone(
+  value: string,
+): "green" | "amber" | "rose" | "neutral" {
+  const v = value.toLowerCase();
+  if (v.startsWith("baj")) return "green";
+  if (v.startsWith("alt")) return "rose";
+  if (v.startsWith("med")) return "amber";
+  return "neutral";
 }

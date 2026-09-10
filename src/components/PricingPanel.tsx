@@ -1,6 +1,14 @@
 "use client";
 
-import { Badge, Card } from "@/components/ui";
+import {
+  IconCalculator,
+  IconCoins,
+  IconLink,
+  IconSparkles,
+  IconTag,
+  IconTokens,
+} from "@/components/icons";
+import { Badge, Card, SectionHeading, Stat, cn } from "@/components/ui";
 import { formatNumber, formatUsd } from "@/lib/format";
 import type { Catalog } from "@/lib/types";
 import type { ModelInfo } from "@/lib/models";
@@ -18,27 +26,45 @@ export default function PricingPanel({ catalog }: Props) {
     );
   }
 
+  const isPeak = catalog.isPeak;
+
   return (
     <div className="flex flex-col gap-4">
-      <Card>
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold">Precios de referencia</h2>
-          <Badge tone={catalog.isPeak ? "amber" : "green"}>
-            {catalog.isPeak ? "Hora punta" : "Hora valle"}
-          </Badge>
+      <Card className="animate-rise">
+        <SectionHeading
+          title="Precios de referencia"
+          subtitle="Precios en USD por 1M de tokens. La tarifa valle es la mitad de la punta."
+          icon={<IconTag className="size-4" />}
+          action={
+            <Badge tone={isPeak ? "amber" : "green"}>
+              {isPeak ? "Hora punta" : "Hora valle"}
+            </Badge>
+          }
+        />
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Stat
+            label="Proveedor"
+            value={catalog.provider?.label ?? "—"}
+            tone="sky"
+            icon={<IconLink className="size-3.5" />}
+          />
+          <Stat
+            label="Tarifa actual"
+            value={isPeak ? "Punta" : "Valle"}
+            tone={isPeak ? "amber" : "green"}
+            hint={`Punta: ${catalog.peakHours}`}
+            icon={<IconCoins className="size-3.5" />}
+          />
+          <Stat
+            label="Modelos"
+            value={`${catalog.models.length}`}
+            hint={catalog.provider?.note}
+            icon={<IconSparkles className="size-3.5" />}
+          />
         </div>
-        <p className="mt-2 text-sm text-slate-400">
-          Precios en USD por 1M de tokens. La tarifa valle es la mitad de la
-          tarifa punta. Horas punta: {catalog.peakHours}.
-        </p>
-        {catalog.provider ? (
-          <p className="mt-1 text-sm text-slate-400">
-            Proveedor activo:{" "}
-            <strong className="text-slate-200">{catalog.provider.label}</strong>{" "}
-            · <span className="text-slate-300">{catalog.provider.note}</span>
-          </p>
-        ) : null}
-        <p className="mt-1 text-xs text-slate-500">
+
+        <p className="mt-3 text-xs text-slate-500">
           Endpoint: <code className="text-slate-400">{catalog.baseUrl}</code> ·
           Hora servidor (UTC):{" "}
           {new Date(catalog.serverTimeUtc).toLocaleTimeString("es-ES")}
@@ -47,15 +73,16 @@ export default function PricingPanel({ catalog }: Props) {
 
       <div className="grid gap-4 md:grid-cols-2">
         {catalog.models.map((model) => (
-          <ModelCard key={model.id} model={model} />
+          <ModelCard key={model.id} model={model} isPeak={isPeak} />
         ))}
       </div>
 
-      <Card>
-        <h3 className="text-sm font-semibold text-slate-300">
-          ¿Cómo se calcula el coste?
-        </h3>
-        <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-400">
+      <Card className="animate-rise">
+        <SectionHeading
+          title="¿Cómo se calcula el coste?"
+          icon={<IconCalculator className="size-4" />}
+        />
+        <ul className="mt-1 list-disc space-y-1.5 pl-4 text-sm text-slate-400">
           <li>
             Coste = tokens de entrada × precio de entrada + tokens de salida ×
             precio de salida.
@@ -78,9 +105,11 @@ export default function PricingPanel({ catalog }: Props) {
   );
 }
 
-function ModelCard({ model }: { model: ModelInfo }) {
+function ModelCard({ model, isPeak }: { model: ModelInfo; isPeak: boolean }) {
+  const active = isPeak ? model.pricing.peak : model.pricing.offPeak;
+
   return (
-    <Card>
+    <Card interactive className="animate-rise">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-slate-100">
@@ -95,8 +124,32 @@ function ModelCard({ model }: { model: ModelInfo }) {
 
       <p className="mt-2 text-sm text-slate-400">{model.description}</p>
 
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-emerald-500/10 to-transparent px-3.5 py-3">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+            Entrada · miss
+          </div>
+          <div className="mt-1 text-xl font-bold tracking-tight text-emerald-300">
+            {formatUsd(active.cacheMissInput)}
+          </div>
+          <div className="text-[11px] text-slate-500">por 1M tokens</div>
+        </div>
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-sky-500/10 to-transparent px-3.5 py-3">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+            Salida
+          </div>
+          <div className="mt-1 text-xl font-bold tracking-tight text-sky-300">
+            {formatUsd(active.output)}
+          </div>
+          <div className="text-[11px] text-slate-500">por 1M tokens</div>
+        </div>
+      </div>
+
       <div className="mt-3 flex flex-wrap gap-1.5">
-        <Badge>Contexto {formatNumber(model.contextLength)}</Badge>
+        <Badge>
+          <IconTokens className="size-3" />
+          {formatNumber(model.contextLength)} contexto
+        </Badge>
         <Badge>Máx. salida {formatNumber(model.maxOutput)}</Badge>
         {model.supportsThinking ? <Badge tone="sky">Thinking</Badge> : null}
         {model.supportsVision ? <Badge tone="green">Vision</Badge> : null}
@@ -104,7 +157,7 @@ function ModelCard({ model }: { model: ModelInfo }) {
 
       <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
         <table className="w-full text-left text-sm">
-          <thead className="bg-white/5 text-xs uppercase tracking-wide text-slate-400">
+          <thead className="bg-white/5 text-xs uppercase tracking-wider text-slate-400">
             <tr>
               <th className="px-3 py-2 font-medium">Tarifa</th>
               <th className="px-3 py-2 font-medium">Entrada (hit)</th>
@@ -113,30 +166,20 @@ function ModelCard({ model }: { model: ModelInfo }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            <tr>
-              <td className="px-3 py-2 text-slate-300">Valle</td>
-              <td className="px-3 py-2 font-mono text-xs text-slate-400">
-                {formatUsd(model.pricing.offPeak.cacheHitInput)}
-              </td>
-              <td className="px-3 py-2 font-mono text-xs text-slate-400">
-                {formatUsd(model.pricing.offPeak.cacheMissInput)}
-              </td>
-              <td className="px-3 py-2 font-mono text-xs text-slate-400">
-                {formatUsd(model.pricing.offPeak.output)}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-3 py-2 text-slate-300">Punta</td>
-              <td className="px-3 py-2 font-mono text-xs text-slate-400">
-                {formatUsd(model.pricing.peak.cacheHitInput)}
-              </td>
-              <td className="px-3 py-2 font-mono text-xs text-slate-400">
-                {formatUsd(model.pricing.peak.cacheMissInput)}
-              </td>
-              <td className="px-3 py-2 font-mono text-xs text-slate-400">
-                {formatUsd(model.pricing.peak.output)}
-              </td>
-            </tr>
+            <TierRow
+              label="Valle"
+              hit={model.pricing.offPeak.cacheHitInput}
+              miss={model.pricing.offPeak.cacheMissInput}
+              out={model.pricing.offPeak.output}
+              active={!isPeak}
+            />
+            <TierRow
+              label="Punta"
+              hit={model.pricing.peak.cacheHitInput}
+              miss={model.pricing.peak.cacheMissInput}
+              out={model.pricing.peak.output}
+              active={isPeak}
+            />
           </tbody>
         </table>
       </div>
@@ -147,5 +190,39 @@ function ModelCard({ model }: { model: ModelInfo }) {
         </p>
       ) : null}
     </Card>
+  );
+}
+
+function TierRow({
+  label,
+  hit,
+  miss,
+  out,
+  active,
+}: {
+  label: string;
+  hit: number;
+  miss: number;
+  out: number;
+  active: boolean;
+}) {
+  return (
+    <tr className={cn(active && "bg-emerald-400/[0.07]")}>
+      <td className="px-3 py-2">
+        <span className="flex items-center gap-2 text-slate-300">
+          {label}
+          {active ? <Badge tone="green">Ahora</Badge> : null}
+        </span>
+      </td>
+      <td className="px-3 py-2 font-mono text-xs text-slate-400">
+        {formatUsd(hit)}
+      </td>
+      <td className="px-3 py-2 font-mono text-xs text-slate-400">
+        {formatUsd(miss)}
+      </td>
+      <td className="px-3 py-2 font-mono text-xs text-slate-400">
+        {formatUsd(out)}
+      </td>
+    </tr>
   );
 }

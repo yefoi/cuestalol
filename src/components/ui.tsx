@@ -9,14 +9,18 @@ export function cn(
 export function Card({
   children,
   className,
+  interactive = false,
 }: {
   children: ReactNode;
   className?: string;
+  interactive?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset]",
+        "relative rounded-2xl border border-white/10 bg-white/[0.035] p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_20px_40px_-24px_rgba(0,0,0,0.8)] backdrop-blur-sm",
+        interactive &&
+          "transition duration-200 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.06]",
         className,
       )}
     >
@@ -25,13 +29,49 @@ export function Card({
   );
 }
 
-type ButtonVariant = "primary" | "ghost" | "subtle";
+export function SectionHeading({
+  title,
+  subtitle,
+  icon,
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div className="flex items-start gap-3">
+        {icon ? (
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-emerald-300">
+            {icon}
+          </span>
+        ) : null}
+        <div>
+          <h2 className="text-base font-semibold tracking-tight text-slate-100">
+            {title}
+          </h2>
+          {subtitle ? (
+            <p className="mt-0.5 max-w-2xl text-sm text-slate-400">{subtitle}</p>
+          ) : null}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+type ButtonVariant = "primary" | "ghost" | "subtle" | "danger";
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary:
-    "bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-lg shadow-emerald-500/20",
-  ghost: "border border-white/15 text-slate-200 hover:bg-white/5",
+    "bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 hover:from-emerald-300 hover:to-teal-300 shadow-lg shadow-emerald-500/20",
+  ghost:
+    "border border-white/12 text-slate-200 hover:border-white/25 hover:bg-white/5",
   subtle: "bg-white/10 text-slate-100 hover:bg-white/15",
+  danger:
+    "border border-rose-400/30 text-rose-200 hover:bg-rose-400/10",
 };
 
 export function Button({
@@ -42,7 +82,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100",
         buttonVariants[variant],
         className,
       )}
@@ -51,7 +91,7 @@ export function Button({
   );
 }
 
-type BadgeTone = "neutral" | "green" | "amber" | "sky" | "rose";
+type BadgeTone = "neutral" | "green" | "amber" | "sky" | "rose" | "violet";
 
 const badgeTones: Record<BadgeTone, string> = {
   neutral: "border-white/15 bg-white/5 text-slate-300",
@@ -59,6 +99,7 @@ const badgeTones: Record<BadgeTone, string> = {
   amber: "border-amber-400/30 bg-amber-400/10 text-amber-300",
   sky: "border-sky-400/30 bg-sky-400/10 text-sky-300",
   rose: "border-rose-400/30 bg-rose-400/10 text-rose-300",
+  violet: "border-violet-400/30 bg-violet-400/10 text-violet-300",
 };
 
 export function Badge({
@@ -95,6 +136,116 @@ export function Spinner({ className }: { className?: string }) {
   );
 }
 
+export function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn("shimmer rounded-xl border border-white/5 bg-white/5", className)}
+      aria-hidden
+    />
+  );
+}
+
+type StatTone = "neutral" | "green" | "sky" | "amber" | "rose" | "violet";
+
+const statIconTones: Record<StatTone, string> = {
+  neutral: "border-white/10 bg-white/5 text-slate-300",
+  green: "border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
+  sky: "border-sky-400/25 bg-sky-400/10 text-sky-300",
+  amber: "border-amber-400/25 bg-amber-400/10 text-amber-300",
+  rose: "border-rose-400/25 bg-rose-400/10 text-rose-300",
+  violet: "border-violet-400/25 bg-violet-400/10 text-violet-300",
+};
+
+const statValueTones: Record<StatTone, string> = {
+  neutral: "text-slate-100",
+  green: "text-emerald-300",
+  sky: "text-sky-300",
+  amber: "text-amber-300",
+  rose: "text-rose-300",
+  violet: "text-violet-300",
+};
+
+export function Stat({
+  label,
+  value,
+  hint,
+  tone = "neutral",
+  icon,
+  className,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: StatTone;
+  icon?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-white/10 bg-slate-950/40 px-3.5 py-3",
+        className,
+      )}
+    >
+      <div className="flex items-center gap-2">
+        {icon ? (
+          <span
+            className={cn(
+              "flex size-6 items-center justify-center rounded-lg border",
+              statIconTones[tone],
+            )}
+          >
+            {icon}
+          </span>
+        ) : null}
+        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+          {label}
+        </span>
+      </div>
+      <div
+        className={cn(
+          "mt-1.5 text-lg font-semibold tracking-tight",
+          statValueTones[tone],
+        )}
+      >
+        {value}
+      </div>
+      {hint ? <div className="text-[11px] text-slate-500">{hint}</div> : null}
+    </div>
+  );
+}
+
+export function EmptyState({
+  icon,
+  title,
+  description,
+  className,
+}: {
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+  className?: string;
+}) {
+  return (
+    <Card
+      className={cn(
+        "flex min-h-72 flex-col items-center justify-center gap-3 text-center",
+        className,
+      )}
+    >
+      {icon ? (
+        <span className="flex size-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-300">
+          {icon}
+        </span>
+      ) : null}
+      <p className="text-base font-medium text-slate-200">{title}</p>
+      {description ? (
+        <p className="max-w-md text-sm text-slate-500">{description}</p>
+      ) : null}
+    </Card>
+  );
+}
+
 export function Field({
   label,
   hint,
@@ -106,7 +257,7 @@ export function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+      <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
         {label}
       </span>
       {children}
