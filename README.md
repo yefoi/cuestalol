@@ -22,6 +22,8 @@ La app funciona con dos proveedores compatibles con OpenAI. Elige uno en `.env.l
 
 Si defines `OPENCODE_API_KEY`, tiene prioridad.
 
+El catálogo incluye ~19 modelos de OpenCode Go (DeepSeek, GLM, Kimi, MiMo, MiniMax, Qwen, LongCat, Hy) con sus precios y límites mensuales. La pestaña **Planes** incluye una propuesta de monetización y un simulador de margen.
+
 ## Puesta en marcha
 
 ```bash

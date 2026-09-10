@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { hasApiKey, listRemoteModels, providerInfo } from "@/lib/deepseek";
-import { modelCatalog } from "@/lib/models";
+import { modelCatalog, modelsForProvider } from "@/lib/models";
 
 export const runtime = "nodejs";
 
@@ -9,11 +9,22 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const verify = url.searchParams.get("verify") === "1";
 
-  const base = modelCatalog();
   const provider = providerInfo();
+  const models = modelsForProvider(provider?.id);
+  const base = modelCatalog();
+
+  const defaults = base.defaults.filter((id) =>
+    models.some((model) => model.id === id),
+  );
+  const estimatorModel = models.some((model) => model.id === base.estimatorModel)
+    ? base.estimatorModel
+    : models[0]?.id ?? base.estimatorModel;
 
   const catalog = {
     ...base,
+    models,
+    defaults: defaults.length ? defaults : models.slice(0, 1).map((m) => m.id),
+    estimatorModel,
     baseUrl: provider?.baseUrl ?? base.baseUrl,
     hasApiKey: hasApiKey(),
     provider,

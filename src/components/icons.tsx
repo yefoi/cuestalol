@@ -250,3 +250,53 @@ export function IconCopy(props: IconProps) {
     </Svg>
   );
 }
+
+export function IconWallet(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="6" width="18" height="13" rx="3" />
+      <path d="M3 10h18" />
+      <path d="M16.5 14.5h.01" />
+      <path d="M6 6V5a2 2 0 0 1 2-2h9" />
+    </Svg>
+  );
+}
+
+export function IconCrown(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 8l3.5 3L12 5l4.5 6L20 8l-1.4 9H5.4L4 8Z" />
+      <path d="M5.5 20h13" />
+    </Svg>
+  );
+}
+
+export function IconUsers(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
+      <path d="M16.5 5.2a3.2 3.2 0 0 1 0 5.6" />
+      <path d="M17 14.6a5.5 5.5 0 0 1 3.5 5.4" />
+    </Svg>
+  );
+}
+
+export function IconRocket(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 15c-1 1.3-1.3 4-1.3 5.3 1.3 0 4-.3 5.3-1.3" />
+      <path d="M9 15l-2.5-2.5c1-4.5 4.5-8 11-8 .5 0 .5 0 .5.5-.5 6.5-4 10-8.5 11L9 15Z" />
+      <circle cx="14.5" cy="9.5" r="1.6" />
+    </Svg>
+  );
+}
+
+export function IconLock(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" />
+      <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
+    </Svg>
+  );
+}

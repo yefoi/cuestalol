@@ -231,12 +231,18 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
         ) : null}
 
         <div className="mt-5">
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-            Modelos
-          </span>
-          <div className="mt-2 grid gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
+              Modelos
+            </span>
+            <span className="text-[11px] text-slate-500">
+              {effectiveSelected.length} de {models.length}
+            </span>
+          </div>
+          <div className="mt-2 grid max-h-80 gap-2 overflow-y-auto pr-1">
             {models.map((model) => {
               const active = effectiveSelected.includes(model.id);
+              const price = model.pricing.offPeak;
               return (
                 <button
                   key={model.id}
@@ -253,8 +259,12 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
                     <span className="block truncate font-medium text-slate-100">
                       {model.label}
                     </span>
-                    <span className="block truncate text-xs text-slate-500">
-                      {model.version}
+                    <span className="block truncate text-[11px] text-slate-500">
+                      {model.family} · {formatUsd(price.cacheMissInput)}/
+                      {formatUsd(price.output)} por 1M
+                      {model.monthlyLimitUsd
+                        ? ` · tope ${formatUsd(model.monthlyLimitUsd)}/mes`
+                        : ""}
                     </span>
                   </span>
                   <span
@@ -331,6 +341,8 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
 
         {data?.results.map((result) => {
           const winner = fastest === result.model || cheapest === result.model;
+          const mainText = result.content || result.reasoning || "";
+          const mainLabel = result.content ? "Respuesta" : "Razonamiento";
           return (
             <Card
               key={result.model}
@@ -451,16 +463,16 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
                   <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-slate-950/60">
                     <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.03] px-3 py-1.5">
                       <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-                        Respuesta
+                        {mainLabel}
                       </span>
-                      <CopyButton text={result.content ?? ""} />
+                      <CopyButton text={mainText} />
                     </div>
                     <pre className="max-h-72 overflow-auto whitespace-pre-wrap p-3 text-[13px] leading-relaxed text-slate-200">
-                      {result.content || "(sin contenido)"}
+                      {mainText || "(sin contenido)"}
                     </pre>
                   </div>
 
-                  {result.reasoning ? (
+                  {result.content && result.reasoning ? (
                     <details className="mt-3 rounded-xl border border-white/10 bg-slate-950/40 p-3">
                       <summary className="cursor-pointer text-sm text-slate-400">
                         Ver razonamiento interno

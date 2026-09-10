@@ -1,4 +1,4 @@
-import { DEFAULT_MODELS } from "./models";
+import { DEFAULT_MODELS, getModel } from "./models";
 
 export type ProviderId = "opencode-go" | "deepseek";
 
@@ -134,7 +134,11 @@ export interface ChatOptions {
 
 interface StreamChunk {
   choices?: Array<{
-    delta?: { content?: string | null; reasoning_content?: string | null };
+    delta?: {
+      content?: string | null;
+      reasoning_content?: string | null;
+      reasoning?: string | null;
+    };
   }>;
   usage?: {
     prompt_tokens?: number;
@@ -161,19 +165,34 @@ export async function streamChat(options: ChatOptions): Promise<ChatResult> {
 
   if (options.temperature != null) body.temperature = options.temperature;
   if (options.maxTokens != null) body.max_tokens = options.maxTokens;
-  if (options.thinking === true) body.thinking = { type: "enabled" };
-  if (options.thinking === false) body.thinking = { type: "disabled" };
-  if (options.reasoningEffort) body.reasoning_effort = options.reasoningEffort;
+
+  const supportsThinking = getModel(options.model)?.supportsThinking ?? false;
+  if (supportsThinking) {
+    if (options.thinking === true) body.thinking = { type: "enabled" };
+    if (options.thinking === false) body.thinking = { type: "disabled" };
+    if (options.reasoningEffort) {
+      body.reasoning_effort = options.reasoningEffort;
+    }
+  }
   if (options.jsonMode && options.thinking !== true) {
     body.response_format = { type: "json_object" };
   }
 
-  const response = await fetch(`${config.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: buildHeaders(config, options.sessionId),
-    body: JSON.stringify(body),
-    signal: options.signal,
-  });
+  const send = () =>
+    fetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: buildHeaders(config, options.sessionId),
+      body: JSON.stringify(body),
+      signal: options.signal,
+    });
+
+  let response = await send();
+
+  if (!response.ok && body.response_format) {
+    delete body.response_format;
+    const retry = await send();
+    if (retry.ok) response = retry;
+  }
 
   if (!response.ok || !response.body) {
     const detail = await response.text().catch(() => "");
@@ -220,9 +239,10 @@ export async function streamChat(options: ChatOptions): Promise<ChatResult> {
       }
 
       const delta = chunk.choices?.[0]?.delta;
-      if (delta?.reasoning_content) {
+      const reasoningDelta = delta?.reasoning_content ?? delta?.reasoning;
+      if (reasoningDelta) {
         markFirstToken();
-        reasoning += delta.reasoning_content;
+        reasoning += reasoningDelta;
       }
       if (delta?.content) {
         markFirstToken();

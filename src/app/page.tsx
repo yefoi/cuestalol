@@ -10,6 +10,7 @@ import {
 import ComparePanel from "@/components/ComparePanel";
 import EstimatePanel from "@/components/EstimatePanel";
 import HistoryPanel from "@/components/HistoryPanel";
+import PlansPanel from "@/components/PlansPanel";
 import PricingPanel from "@/components/PricingPanel";
 import {
   IconAlert,
@@ -19,6 +20,7 @@ import {
   IconHistory,
   IconShield,
   IconTag,
+  IconWallet,
   LogoMark,
 } from "@/components/icons";
 import { Badge, Button, Skeleton, Spinner, cn } from "@/components/ui";
@@ -31,12 +33,13 @@ import {
 } from "@/lib/history";
 import type { Catalog, HistoryEntry } from "@/lib/types";
 
-type Tab = "comparar" | "estimar" | "precios" | "historial";
+type Tab = "comparar" | "estimar" | "precios" | "planes" | "historial";
 
 const TABS = [
   { id: "comparar", label: "Comparador", icon: IconCompare },
   { id: "estimar", label: "Estimador", icon: IconCalculator },
   { id: "precios", label: "Precios", icon: IconTag },
+  { id: "planes", label: "Planes", icon: IconWallet },
   { id: "historial", label: "Historial", icon: IconHistory },
 ] as const satisfies ReadonlyArray<{ id: Tab; label: string; icon: unknown }>;
 
@@ -237,6 +240,9 @@ export default function Home() {
             </div>
             <div className={tab === "precios" ? undefined : "hidden"}>
               <PricingPanel catalog={catalog} />
+            </div>
+            <div className={tab === "planes" ? undefined : "hidden"}>
+              <PlansPanel catalog={catalog} />
             </div>
             <div className={tab === "historial" ? undefined : "hidden"}>
               <HistoryPanel

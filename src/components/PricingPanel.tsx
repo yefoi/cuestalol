@@ -146,11 +146,16 @@ function ModelCard({ model, isPeak }: { model: ModelInfo; isPeak: boolean }) {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
+        <Badge tone="violet">{model.family}</Badge>
         <Badge>
           <IconTokens className="size-3" />
           {formatNumber(model.contextLength)} contexto
         </Badge>
-        <Badge>Máx. salida {formatNumber(model.maxOutput)}</Badge>
+        {model.monthlyLimitUsd ? (
+          <Badge tone="green">
+            Incluye {formatUsd(model.monthlyLimitUsd)}/mes en Go
+          </Badge>
+        ) : null}
         {model.supportsThinking ? <Badge tone="sky">Thinking</Badge> : null}
         {model.supportsVision ? <Badge tone="green">Vision</Badge> : null}
       </div>
