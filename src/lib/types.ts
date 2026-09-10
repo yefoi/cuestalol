@@ -1,5 +1,13 @@
 import type { ModelCost, ModelInfo, PricingTier, Usage } from "./models";
 
+export interface ProviderSummary {
+  id: string;
+  label: string;
+  baseUrl: string;
+  requiresSession: boolean;
+  note: string;
+}
+
 export interface Catalog {
   baseUrl: string;
   serverTimeUtc: string;
@@ -10,6 +18,7 @@ export interface Catalog {
   estimatorModel: string;
   models: ModelInfo[];
   hasApiKey: boolean;
+  provider: ProviderSummary | null;
   verified?: boolean;
   remoteModels?: string[];
   verifyError?: string;

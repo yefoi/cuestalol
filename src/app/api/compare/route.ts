@@ -19,6 +19,7 @@ interface CompareBody {
   maxTokens?: unknown;
   thinking?: unknown;
   reasoningEffort?: unknown;
+  sessionId?: unknown;
 }
 
 export async function POST(request: Request) {
@@ -83,6 +84,8 @@ export async function POST(request: Request) {
     maxTokens,
     thinking,
     reasoningEffort,
+    sessionId:
+      typeof body.sessionId === "string" ? body.sessionId : undefined,
   });
 
   const results = outcomes.map(({ model, result, error }) => {

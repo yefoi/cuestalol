@@ -21,6 +21,7 @@ import {
 } from "@/lib/format";
 import { exportEstimateCsv, exportEstimatePdf } from "@/lib/export";
 import { addHistoryEntry, makeHistoryId } from "@/lib/history";
+import { getSessionId } from "@/lib/session";
 import type { Catalog, EstimateResponse, HistoryEntry } from "@/lib/types";
 
 interface Props {
@@ -107,6 +108,7 @@ export default function EstimatePanel({ catalog, initialEntry }: Props) {
           hourlyRate,
           hoursPerDay,
           teamSize,
+          sessionId: getSessionId(),
         }),
       });
       const json = (await res.json()) as EstimateResponse & {

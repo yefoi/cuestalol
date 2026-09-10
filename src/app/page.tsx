@@ -108,6 +108,9 @@ export default function Home() {
                 {catalog.isPeak ? "Hora punta" : "Hora valle"}
               </Badge>
             ) : null}
+            {catalog?.provider ? (
+              <Badge tone="sky">{catalog.provider.label}</Badge>
+            ) : null}
             {catalog ? (
               <Badge tone={catalog.hasApiKey ? "green" : "rose"}>
                 {catalog.hasApiKey ? "API key detectada" : "Falta API key"}

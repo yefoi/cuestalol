@@ -24,6 +24,7 @@ interface EstimateBody {
   hourlyRate?: unknown;
   hoursPerDay?: unknown;
   teamSize?: unknown;
+  sessionId?: unknown;
 }
 
 interface RawFeature {
@@ -151,6 +152,8 @@ export async function POST(request: Request) {
       jsonMode: true,
       temperature: 0.2,
       maxTokens: 8_000,
+      sessionId:
+        typeof body.sessionId === "string" ? body.sessionId : undefined,
     });
   } catch (error) {
     return NextResponse.json(

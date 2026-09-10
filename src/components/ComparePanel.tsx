@@ -16,6 +16,7 @@ import {
 import { exportCompareCsv } from "@/lib/export";
 import { formatMs, formatNumber, formatUsd } from "@/lib/format";
 import { addHistoryEntry, makeHistoryId } from "@/lib/history";
+import { getSessionId } from "@/lib/session";
 import type { Catalog, CompareResponse, HistoryEntry } from "@/lib/types";
 
 interface Props {
@@ -75,6 +76,7 @@ export default function ComparePanel({ catalog, initialEntry }: Props) {
           temperature,
           maxTokens,
           thinking,
+          sessionId: getSessionId(),
         }),
       });
       const json = (await res.json()) as CompareResponse & { error?: string };

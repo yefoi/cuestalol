@@ -31,6 +31,13 @@ export default function PricingPanel({ catalog }: Props) {
           Precios en USD por 1M de tokens. La tarifa valle es la mitad de la
           tarifa punta. Horas punta: {catalog.peakHours}.
         </p>
+        {catalog.provider ? (
+          <p className="mt-1 text-sm text-slate-400">
+            Proveedor activo:{" "}
+            <strong className="text-slate-200">{catalog.provider.label}</strong>{" "}
+            · <span className="text-slate-300">{catalog.provider.note}</span>
+          </p>
+        ) : null}
         <p className="mt-1 text-xs text-slate-500">
           Endpoint: <code className="text-slate-400">{catalog.baseUrl}</code> ·
           Hora servidor (UTC):{" "}

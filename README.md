@@ -11,11 +11,22 @@ Web conectada a la API de DeepSeek que:
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4.
 
+## Proveedores de IA
+
+La app funciona con dos proveedores compatibles con OpenAI. Elige uno en `.env.local`:
+
+| Proveedor | Variables | Notas |
+| --- | --- | --- |
+| **OpenCode Go** (recomendado) | `OPENCODE_API_KEY` + `OPENCODE_BASE_URL=https://opencode.ai/zen/go/v1` | Suscripción $10/mes. Envía `User-Agent` propio y cabecera `x-opencode-session` automáticamente. |
+| **DeepSeek directo** | `DEEPSEEK_API_KEY` (+ `DEEPSEEK_BASE_URL` opcional) | Facturación por token. |
+
+Si defines `OPENCODE_API_KEY`, tiene prioridad.
+
 ## Puesta en marcha
 
 ```bash
 cp .env.example .env.local      # en Windows: Copy-Item .env.example .env.local
-# edita .env.local y añade DEEPSEEK_API_KEY
+# edita .env.local y añade tu clave
 npm install
 npm run dev
 ```

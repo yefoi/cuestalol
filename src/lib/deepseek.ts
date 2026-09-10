@@ -1,6 +1,101 @@
 import { DEFAULT_MODELS } from "./models";
 
-const BASE_URL = process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com";
+export type ProviderId = "opencode-go" | "deepseek";
+
+export interface ProviderInfo {
+  id: ProviderId;
+  label: string;
+  baseUrl: string;
+  requiresSession: boolean;
+  note: string;
+}
+
+interface ProviderConfig extends ProviderInfo {
+  apiKey: string;
+}
+
+const DEFAULT_OPENCODE_BASE = "https://opencode.ai/zen/go/v1";
+const DEFAULT_DEEPSEEK_BASE = "https://api.deepseek.com";
+const CLIENT_USER_AGENT = "cuestalo/0.1";
+
+let fallbackSessionId: string | null = null;
+
+function randomId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `cuestalo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+function normalizeBase(url: string): string {
+  return url.trim().replace(/\/+$/, "");
+}
+
+function resolveProvider(): ProviderConfig {
+  const opencodeKey = process.env.OPENCODE_API_KEY?.trim();
+  if (opencodeKey) {
+    return {
+      id: "opencode-go",
+      label: "OpenCode Go",
+      baseUrl: normalizeBase(
+        process.env.OPENCODE_BASE_URL ?? DEFAULT_OPENCODE_BASE,
+      ),
+      apiKey: opencodeKey,
+      requiresSession: true,
+      note: "Suscripción OpenCode Go ($10/mes). Los precios mostrados son las tarifas de referencia.",
+    };
+  }
+
+  const deepseekKey = process.env.DEEPSEEK_API_KEY?.trim();
+  if (deepseekKey) {
+    return {
+      id: "deepseek",
+      label: "DeepSeek",
+      baseUrl: normalizeBase(
+        process.env.DEEPSEEK_BASE_URL ?? DEFAULT_DEEPSEEK_BASE,
+      ),
+      apiKey: deepseekKey,
+      requiresSession: false,
+      note: "Facturación directa de DeepSeek por token.",
+    };
+  }
+
+  throw new Error(
+    "Falta una clave de API. Define OPENCODE_API_KEY o DEEPSEEK_API_KEY en .env.local (ver .env.example).",
+  );
+}
+
+export function hasApiKey(): boolean {
+  return Boolean(
+    process.env.OPENCODE_API_KEY?.trim() ||
+      process.env.DEEPSEEK_API_KEY?.trim(),
+  );
+}
+
+export function providerInfo(): ProviderInfo | null {
+  try {
+    const { id, label, baseUrl, requiresSession, note } = resolveProvider();
+    return { id, label, baseUrl, requiresSession, note };
+  } catch {
+    return null;
+  }
+}
+
+function buildHeaders(
+  config: ProviderConfig,
+  sessionId?: string,
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${config.apiKey}`,
+    "User-Agent": CLIENT_USER_AGENT,
+  };
+  if (config.requiresSession) {
+    if (!fallbackSessionId) fallbackSessionId = randomId();
+    headers["x-opencode-session"] = sessionId?.trim() || fallbackSessionId;
+  }
+  return headers;
+}
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -33,21 +128,8 @@ export interface ChatOptions {
   thinking?: boolean;
   reasoningEffort?: "low" | "medium" | "high";
   jsonMode?: boolean;
+  sessionId?: string;
   signal?: AbortSignal;
-}
-
-export function hasApiKey(): boolean {
-  return Boolean(process.env.DEEPSEEK_API_KEY?.trim());
-}
-
-function apiKey(): string {
-  const key = process.env.DEEPSEEK_API_KEY?.trim();
-  if (!key) {
-    throw new Error(
-      "Falta DEEPSEEK_API_KEY. Añádela en .env.local (ver .env.example).",
-    );
-  }
-  return key;
 }
 
 interface StreamChunk {
@@ -66,7 +148,7 @@ interface StreamChunk {
 }
 
 export async function streamChat(options: ChatOptions): Promise<ChatResult> {
-  const key = apiKey();
+  const config = resolveProvider();
   const started = Date.now();
   let firstTokenAt = 0;
 
@@ -86,12 +168,9 @@ export async function streamChat(options: ChatOptions): Promise<ChatResult> {
     body.response_format = { type: "json_object" };
   }
 
-  const response = await fetch(`${BASE_URL}/chat/completions`, {
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-    },
+    headers: buildHeaders(config, options.sessionId),
     body: JSON.stringify(body),
     signal: options.signal,
   });
@@ -99,7 +178,7 @@ export async function streamChat(options: ChatOptions): Promise<ChatResult> {
   if (!response.ok || !response.body) {
     const detail = await response.text().catch(() => "");
     throw new Error(
-      `DeepSeek respondió ${response.status} ${response.statusText}. ${detail.slice(0, 600)}`,
+      `${config.label} respondió ${response.status} ${response.statusText}. ${detail.slice(0, 600)}`,
     );
   }
 
@@ -207,9 +286,9 @@ export async function streamMany(
 }
 
 export async function listRemoteModels(): Promise<string[]> {
-  const key = apiKey();
-  const response = await fetch(`${BASE_URL}/models`, {
-    headers: { Authorization: `Bearer ${key}` },
+  const config = resolveProvider();
+  const response = await fetch(`${config.baseUrl}/models`, {
+    headers: buildHeaders(config),
     cache: "no-store",
   });
   if (!response.ok) {
